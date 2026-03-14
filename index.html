@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AttendanceApp Portal</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; text-align: center; background: #f0f4f8; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input { width: 90%; padding: 15px; margin: 15px 0; border: 2px solid #dfe6e9; border-radius: 12px; font-size: 1.2em; text-align: center; }
+        button { background: #0984e3; color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1.1em; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .error { color: #d63031; font-weight: bold; padding: 15px; background: #fff5f5; border-radius: 10px; margin-top: 20px; display: none; }
+        #success-zone { display: none; margin-top: 25px; border-top: 2px solid #f1f2f6; padding-top: 20px; }
+        .code-display { font-size: 3.5em; font-weight: bold; color: #d63031; background: #eee; border-radius: 10px; margin: 20px 0; padding: 10px; letter-spacing: 5px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>AttendanceApp</h2>
+        
+        <div id="input-zone">
+            <p>Step 1: Enter your 7-digit Student ID</p>
+            <input type="number" id="studentID" placeholder="7-Digit ID" inputmode="numeric">
+            <button onclick="verifyID()">Verify ID</button>
+            <div id="errorMessage" class="error">Access Denied: This device already submitted today.</div>
+        </div>
+
+        <div id="success-zone">
+            <p>Step 2: Note the Access Code below</p>
+            <div id="codeDisplay" class="code-display">----</div>
+            <p style="font-size: 0.9em; color: #636e72;">Check the screen for this code. You will need to type it in the form.</p>
+            <button onclick="launchForm()" style="background:#00b894;">I have the code, open Form</button>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            formID: "1FAIpQLSfS-26mbU2wUVmN6WRNIU9ygJghJe4ZhPqOPLTiiU1HkHfqYg",
+            sessionID: "ClassA",
+            entryID: "entry.1789568109",
+            entrySession: "entry.952022947",
+            entryStart: "entry.1333691548",
+            codes: ["A721", "B902", "C343", "D554", "E125", "F886", "G097", "H338"]
+        };
+
+        // Anchor the start time when the page loads
+        const loadTime = new Date();
+        const formattedStart = loadTime.getHours().toString().padStart(2, '0') + ":" + 
+                               loadTime.getMinutes().toString().padStart(2, '0') + ":" + 
+                               loadTime.getSeconds().toString().padStart(2, '0');
+
+        function verifyID() {
+            const id = document.getElementById('studentID').value;
+            const today = new Date().toDateString();
+
+            // Check device lock
+            if (localStorage.getItem('att_lock') === today) {
+                document.getElementById('errorMessage').style.display = 'block';
+                return;
+            }
+
+            // Validate 7 digits
+            if (id.length !== 7) {
+                alert("Please enter exactly 7 digits.");
+                return;
+            }
+
+            // Calculate current rotating code
+            const elapsed = new Date() - loadTime;
+            const index = Math.floor(elapsed / 120000) % CONFIG.codes.length;
+            
+            // Display the code
+            document.getElementById('codeDisplay').innerText = CONFIG.codes[index];
+            
+            // Swap screens
+            document.getElementById('input-zone').style.display = 'none';
+            document.getElementById('success-zone').style.display = 'block';
+        }
+
+        function launchForm() {
+            const id = document.getElementById('studentID').value;
+            
+            // LOCK the device for today
+            localStorage.setItem('att_lock', new Date().toDateString());
+
+            // Build pre-filled URL
+            const finalURL = `https://docs.google.com/forms/d/e/${CONFIG.formID}/viewform?` +
+                             `${CONFIG.entryID}=${id}` +
+                             `&${CONFIG.entrySession}=${CONFIG.sessionID}` +
+                             `&${CONFIG.entryStart}=${formattedStart}`;
+
+            window.location.href = finalURL;
+        }
+    </script>
+</body>
+</html>
