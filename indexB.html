@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gateway - Class B</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f0f4f8; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .status-box { background: #f3e5f5; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.9em; color: #7b1fa2; border: 1px solid #e1bee7; text-align: left; }
+        .status-box b { color: #4a148c; }
+        input { width: 92%; padding: 15px; margin: 10px 0; border: 2px solid #dfe6e9; border-radius: 12px; font-size: 1.1em; text-align: center; outline: none; }
+        button { background: #6f42c1; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; font-size: 1.1em; margin-top: 15px; }
+        #error { color: #d32f2f; font-weight: bold; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Attendance Gateway</h2>
+        
+        <div class="status-box">
+            <div><b>Session:</b> <span id="viewSession">Detecting...</span></div>
+            <div><b>Start Time:</b> <span id="viewTime">Detecting...</span></div>
+        </div>
+
+        <p style="color: #666;">Enter Student ID and Screen Access Code:</p>
+        <input type="number" id="studentID" placeholder="7-Digit Student ID" inputmode="numeric">
+        <input type="text" id="userInputCode" placeholder="Access Code (e.g. A721)" maxlength="4" style="text-transform:uppercase;">
+        
+        <button onclick="submitAttendance()">Submit Attendance</button>
+        <div id="error"></div>
+    </div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const capturedSession = urlParams.get('sID');
+    const capturedStartTime = urlParams.get('sTime');
+
+    if (capturedSession && capturedStartTime) {
+        document.getElementById('viewSession').innerText = capturedSession;
+        document.getElementById('viewTime').innerText = capturedStartTime;
+    } else {
+        document.getElementById('viewSession').innerText = "MISSING - Rescan QR";
+        document.getElementById('viewTime').innerText = "MISSING - Rescan QR";
+        document.querySelector('.status-box').style.background = "#ffebee";
+        document.querySelector('.status-box').style.color = "#c62828";
+    }
+
+    const CONFIG = {
+        formID: "1FAIpQLSfS-26mbU2wUVmN6WRNIU9ygJghJe4ZhPqOPLTiiU1HkHfqYg",
+        entryID: "1789568109",
+        entrySession: "952022947",
+        entryStart: "1333691548",
+        entryCode: "1629490056",
+        validCodes: ["A721", "B902", "C343", "D554", "E125", "F886", "G097", "H338"]
+    };
+
+    function submitAttendance() {
+        const id = document.getElementById('studentID').value;
+        const code = document.getElementById('userInputCode').value.toUpperCase();
+        const err = document.getElementById('error');
+        const now = new Date().getTime();
+
+        // 1. SECURITY LOCK CHECK
+        const lastSub = localStorage.getItem('lock_B');
+        if (lastSub && (now - lastSub < 1800000)) {
+            const minLeft = Math.ceil((1800000 - (now - lastSub)) / 60000);
+            alert(`Device Locked: Attendance already submitted. Please wait ${minLeft} mins to retry.`);
+            return;
+        }
+
+        // 2. VALIDATION
+        if (!capturedSession || !capturedStartTime) {
+            alert("Error: Data sync failed. Please rescan the QR code.");
+            return;
+        }
+        if (id.length !== 7 || !CONFIG.validCodes.includes(code)) {
+            err.innerText = "Check your ID and Access Code.";
+            err.style.display = "block";
+            return;
+        }
+
+        // 3. APPLY LOCK & REDIRECT
+        localStorage.setItem('lock_B', now);
+        const baseUrl = `https://docs.google.com/forms/d/e/${CONFIG.formID}/viewform`;
+        const params = new URLSearchParams();
+        params.append(`entry.${CONFIG.entryID}`, id);
+        params.append(`entry.${CONFIG.entrySession}`, capturedSession);
+        params.append(`entry.${CONFIG.entryCode}`, code);
+        params.append(`entry.${CONFIG.entryStart}`, capturedStartTime);
+
+        window.location.href = `${baseUrl}?${params.toString()}`;
+    }
+</script>
+</body>
+</html>
