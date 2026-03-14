@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AttendanceApp</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 1.1em; }
+        button { background: #0984e3; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        .error { color: red; font-weight: bold; display: none; margin-top: 20px; }
+        #success { display: none; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>AttendanceApp</h2>
+        <div id="input-zone">
+            <p>Enter 7-digit Student ID:</p>
+            <input type="number" id="sid" placeholder="1234567">
+            <button onclick="verify()">Verify ID</button>
+            <p id="err" class="error">Access Denied: You already submitted today!</p>
+        </div>
+        <div id="success">
+            <p style="color:green">ID Verified!</p>
+            <p>Enter the 4-digit code from the screen into the form next.</p>
+            <button onclick="goToForm()">Open Attendance Form</button>
+        </div>
+    </div>
+
+    <script>
+        const config = {
+            formID: "1FAIpQLSfS-26mbU2wUVmN6WRNIU9ygJghJe4ZhPqOPLTiiU1HkHfqYg",
+            entryID: "entry.1789568109",
+            entrySess: "entry.952022947",
+            entryStart: "entry.1333691548"
+        };
+
+        const startTime = new Date().toLocaleTimeString();
+
+        function verify() {
+            const id = document.getElementById('sid').value;
+            const today = new Date().toDateString();
+
+            if (localStorage.getItem('locked') === today) {
+                document.getElementById('err').style.display = 'block';
+                return;
+            }
+            if (id.length !== 7) { alert("Enter 7 digits"); return; }
+
+            document.getElementById('input-zone').style.display = 'none';
+            document.getElementById('success').style.display = 'block';
+        }
+
+        function goToForm() {
+            const id = document.getElementById('sid').value;
+            localStorage.setItem('locked', new Date().toDateString());
+            const url = `https://docs.google.com/forms/d/e/${config.formID}/viewform?${config.entryID}=${id}&${config.entrySess}=ClassA&${config.entryStart}=${startTime}`;
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>
