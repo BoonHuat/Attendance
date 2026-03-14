@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gateway - Class B</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f0f4f8; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .badge { background: #6f42c1; color: white; padding: 5px 15px; border-radius: 50px; font-weight: bold; display: inline-block; margin-bottom: 10px; }
+        input { width: 90%; padding: 15px; margin: 10px 0; border: 2px solid #dfe6e9; border-radius: 12px; font-size: 1.1em; text-align: center; }
+        button { background: #28a745; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="badge" id="displaySession">...</div>
+        <h2>Attendance Gateway</h2>
+        <input type="number" id="studentID" placeholder="7-Digit Student ID" inputmode="numeric">
+        <input type="text" id="userInputCode" placeholder="Access Code from Screen" maxlength="4">
+        <button onclick="submitAttendance()">Verify & Open Form</button>
+    </div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const capturedSession = urlParams.get('sID') || "ClassB";
+    const capturedStartTime = urlParams.get('sTime') || "00:00:00";
+    document.getElementById('displaySession').innerText = capturedSession;
+
+    const CONFIG = {
+        formID: "1FAIpQLSfS-26mbU2wUVmN6WRNIU9ygJghJe4ZhPqOPLTiiU1HkHfqYg",
+        entryID: "entry.1789568109",
+        entrySession: "entry.952022947",
+        entryStart: "entry.1333691548",
+        entryCode: "entry.1629490056",
+        validCodes: ["A721", "B902", "C343", "D554", "E125", "F886", "G097", "H338"]
+    };
+
+    function submitAttendance() {
+        const id = document.getElementById('studentID').value;
+        const code = document.getElementById('userInputCode').value.toUpperCase();
+        const now = new Date().getTime();
+
+        if (id.length !== 7 || !CONFIG.validCodes.includes(code)) {
+            alert("Invalid ID or Access Code."); return;
+        }
+
+        if (localStorage.getItem('lock_B') && (now - localStorage.getItem('lock_B') < 1800000)) {
+            alert("Already submitted recently."); return;
+        }
+
+        localStorage.setItem('lock_B', now);
+        window.location.href = `https://docs.google.com/forms/d/e/${CONFIG.formID}/viewform?` +
+                               `${CONFIG.entryID}=${id}&${CONFIG.entrySession}=${capturedSession}&` +
+                               `${CONFIG.entryCode}=${code}&${CONFIG.entryStart}=${capturedStartTime}`;
+    }
+</script>
+</body>
+</html>
